@@ -1,0 +1,10 @@
+[package]
+name = "assuan"
+version = "0.0.0"
+authors = ["Chawye Hsu <su+git@chawyehsu.com>"]
+description = "Assuan protocol implementation in Rust"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/chawyehsu/assuan-rs"
+edition = "2024"
+readme = "README.md"
+keywords = ["pinentry", "gpg"]

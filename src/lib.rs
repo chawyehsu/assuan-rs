@@ -7,25 +7,29 @@
 //! It focuses on protocol-level primitives only:
 //! - **Reading**: [`LineReader`] — buffered line reader with spec-enforced limits
 //! - **Parsing**: [`Request`] — parse a line into command + arguments
-//! - **Writing**: [`write_data`], [`write_ok`], [`write_err`], [`write_status`]
+//! - **Responses**: [`Response`] — typed response lines with owned data
+//! - **Server**: [`Server`] — concrete server with `send`/`recv`
+//! - **Client**: [`Client`] — concrete client with `send`/`recv`
 //! - **Errors**: [`ErrorCode`] — GPG/Assuan error codes
-//!
-//! Command dispatch, server loops, and application logic are the consumer's
-//! responsibility.
 
 #![forbid(unused_crate_dependencies)]
 #![deny(missing_docs)]
 
+mod client;
 mod error;
 mod line_reader;
+mod line_writer;
 mod percent;
 mod request;
 mod response;
+mod server;
 
+pub use client::Client;
 pub use error::{Error, ErrorCode};
 pub use line_reader::LineReader;
 pub use request::Request;
-pub use response::{write_data, write_err, write_ok, write_status};
+pub use response::Response;
+pub use server::Server;
 
 /// Maximum size of an Assuan line in bytes, as specified by the protocol.
 pub const MAX_LINE_SIZE: usize = 1000;

@@ -32,7 +32,46 @@ impl<R: Read, W: Write> Client<R, W> {
     ///
     /// Returns the number of bytes written.
     pub fn send(&mut self, req: Request) -> Result<usize, Error> {
-        req.write_to(self.line_writer.inner())
+        match req {
+            Request::Bye => self.line_writer.write_line(b"BYE"),
+            Request::Reset => self.line_writer.write_line(b"RESET"),
+            Request::Nop => self.line_writer.write_line(b"NOP"),
+            Request::End => self.line_writer.write_line(b"END"),
+            Request::Cancel => self.line_writer.write_line(b"CAN"),
+            Request::Help => self.line_writer.write_line(b"HELP"),
+            Request::Quit => self.line_writer.write_line(b"QUIT"),
+            Request::Auth => self.line_writer.write_line(b"AUTH"),
+            Request::Option { key, value } => {
+                if value.is_empty() {
+                    let line = format!("OPTION {key}");
+                    self.line_writer.write_line(line.as_bytes())
+                } else {
+                    let line = format!("OPTION {key}={value}");
+                    self.line_writer.write_line(line.as_bytes())
+                }
+            }
+            Request::Data(data) => self.line_writer.write_data_line(&data),
+            Request::Comment(s) => {
+                let line = format!("# {s}");
+                self.line_writer.write_line(line.as_bytes())
+            }
+            Request::Command { name, args } => {
+                match args {
+                    None => self.line_writer.write_line(name.as_bytes()),
+                    Some(args) => {
+                        // Percent-encode the args.
+                        let encoded_len = crate::percent::encoded_len(args.len());
+                        let mut buf = Vec::with_capacity(name.len() + 1 + encoded_len);
+                        buf.extend_from_slice(name.as_bytes());
+                        buf.push(b' ');
+                        let mut enc_buf = vec![0u8; encoded_len];
+                        let n = crate::percent::encode(args.as_bytes(), &mut enc_buf);
+                        buf.extend_from_slice(&enc_buf[..n]);
+                        self.line_writer.write_line(&buf)
+                    }
+                }
+            }
+        }
     }
 
     /// Receive the next response from the server.

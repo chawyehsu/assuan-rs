@@ -33,14 +33,21 @@ impl<R: Read, W: Write> Server<R, W> {
     ///
     /// Returns the number of bytes written.
     pub fn send(&mut self, resp: Response) -> Result<usize, Error> {
-        resp.write_to(self.line_writer.inner())
+        match resp {
+            Response::Ok(msg) => self.line_writer.write_ok(msg.as_deref()),
+            Response::Err(code, msg) => self.line_writer.write_err(code, msg.as_deref()),
+            Response::Status(kw, val) => self.line_writer.write_status(&kw, &val),
+            Response::Comment(s) => self.line_writer.write_comment(&s),
+            Response::Data(data) => self.line_writer.write_data_line(&data),
+            Response::Inquire(kw, params) => self.line_writer.write_inquire(&kw, &params),
+        }
     }
 
     /// Receive the next request from the client.
     ///
     /// Handles BYE and NOP transparently — they are never returned to the
     /// caller. BYE causes the next call to return `Ok(None)`. RESET is
-    /// surfaced to the caller after sending OK.
+    /// surfaced to the caller after sending OK. Comment lines are skipped.
     ///
     /// Returns `Ok(None)` on BYE or clean EOF.
     pub fn recv(&mut self) -> Result<Option<Request>, Error> {
@@ -56,12 +63,12 @@ impl<R: Read, W: Write> Server<R, W> {
             match &req {
                 Request::Bye => {
                     // Send OK and return None to signal end of session.
-                    Response::OK.write_to(self.line_writer.inner())?;
+                    self.line_writer.write_ok(None)?;
                     return Ok(None);
                 }
                 Request::Nop => {
                     // Send OK, continue to next request.
-                    Response::OK.write_to(self.line_writer.inner())?;
+                    self.line_writer.write_ok(None)?;
                     continue;
                 }
                 Request::Comment(_) => {
@@ -70,7 +77,7 @@ impl<R: Read, W: Write> Server<R, W> {
                 }
                 Request::Reset => {
                     // Send OK, but surface to caller so they can clear state.
-                    Response::OK.write_to(self.line_writer.inner())?;
+                    self.line_writer.write_ok(None)?;
                     return Ok(Some(req));
                 }
                 _ => return Ok(Some(req)),

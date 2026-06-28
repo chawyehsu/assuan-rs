@@ -13,7 +13,7 @@ use crate::percent;
 ///
 /// Writes complete Assuan protocol lines to an underlying [`io::Write`].
 /// Enforces the 1000-byte line length limit.
-pub(crate) struct LineWriter<W: Write> {
+pub struct LineWriter<W: Write> {
     writer: W,
 }
 

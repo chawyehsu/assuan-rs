@@ -50,7 +50,7 @@ impl<R: Read, W: Write> Client<R, W> {
                     self.line_writer.write_line(line.as_bytes())
                 }
             }
-            Request::Data(data) => self.line_writer.write_data_line(&data),
+            Request::Data(data) => self.line_writer.write_data(&data),
             Request::Comment(s) => {
                 let line = format!("# {s}");
                 self.line_writer.write_line(line.as_bytes())

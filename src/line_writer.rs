@@ -41,22 +41,18 @@ impl<W: Write> LineWriter<W> {
     ///
     /// The raw `data` is percent-encoded before writing. Returns the number
     /// of bytes written.
-    pub fn write_data_line(&mut self, data: &[u8]) -> Result<usize, Error> {
+    pub fn write_data(&mut self, data: &[u8]) -> Result<usize, Error> {
         let max_encoded = MAX_LINE_SIZE - 3; // "D " (2) + "\n" (1)
         let encoded_len = percent::encoded_len(data.len());
         if encoded_len > max_encoded {
             return Err(Error::LineTooLong);
         }
 
-        let mut buf = [0u8; MAX_LINE_SIZE];
+        let mut buf = [0u8; MAX_LINE_SIZE - 1]; // leave room for \n in write_line
         buf[0] = b'D';
         buf[1] = b' ';
         let n = percent::encode(data, &mut buf[2..]);
-        buf[2 + n] = b'\n';
-        let total = 2 + n + 1;
-
-        self.writer.write_all(&buf[..total]).map_err(Error::Io)?;
-        Ok(total)
+        self.write_line(&buf[..2 + n])
     }
 
     /// Write an OK line (`OK [message]\n`).
@@ -165,31 +161,31 @@ mod tests {
         assert_eq!(lw.writer, b"line1\nline2\n");
     }
 
-    // -- write_data_line --
+    // -- write_data --
 
     #[test]
     fn write_data_simple() {
-        let (out, n) = collect(|lw| lw.write_data_line(b"hello"));
+        let (out, n) = collect(|lw| lw.write_data(b"hello"));
         assert_eq!(out, b"D hello\n");
         assert_eq!(n, 8);
     }
 
     #[test]
     fn write_data_empty() {
-        let (out, n) = collect(|lw| lw.write_data_line(b""));
+        let (out, n) = collect(|lw| lw.write_data(b""));
         assert_eq!(out, b"D \n");
         assert_eq!(n, 3);
     }
 
     #[test]
     fn write_data_with_encoding() {
-        let (out, _) = collect(|lw| lw.write_data_line(b"hello\nworld"));
+        let (out, _) = collect(|lw| lw.write_data(b"hello\nworld"));
         assert_eq!(out, b"D hello%0Aworld\n");
     }
 
     #[test]
     fn write_data_with_percent() {
-        let (out, _) = collect(|lw| lw.write_data_line(b"100%"));
+        let (out, _) = collect(|lw| lw.write_data(b"100%"));
         assert_eq!(out, b"D 100%25\n");
     }
 
@@ -198,12 +194,12 @@ mod tests {
         // Each \n encodes to 3 bytes (%0A). 334 * 3 = 1002 > 997.
         let data = vec![b'\n'; 334];
         let mut lw = LineWriter::new(Vec::new());
-        assert!(matches!(lw.write_data_line(&data), Err(Error::LineTooLong)));
+        assert!(matches!(lw.write_data(&data), Err(Error::LineTooLong)));
     }
 
     #[test]
     fn write_data_non_ascii() {
-        let (out, _) = collect(|lw| lw.write_data_line(&[0x80, 0xFF]));
+        let (out, _) = collect(|lw| lw.write_data(&[0x80, 0xFF]));
         assert_eq!(out, b"D %80%FF\n");
     }
 

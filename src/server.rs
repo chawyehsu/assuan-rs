@@ -38,7 +38,7 @@ impl<R: Read, W: Write> Server<R, W> {
             Response::Err(code, msg) => self.line_writer.write_err(code, msg.as_deref()),
             Response::Status(kw, val) => self.line_writer.write_status(&kw, &val),
             Response::Comment(s) => self.line_writer.write_comment(&s),
-            Response::Data(data) => self.line_writer.write_data_line(&data),
+            Response::Data(data) => self.line_writer.write_data(&data),
             Response::Inquire(kw, params) => self.line_writer.write_inquire(&kw, &params),
         }
     }

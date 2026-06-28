@@ -41,11 +41,11 @@ pub const fn encoded_len(src_len: usize) -> usize {
 ///
 /// Handles `%XX` escape sequences. Does NOT interpret `+` as space.
 ///
-/// Returns [`Error::LineMalformed`](crate::Error::LineMalformed) if the decoded
+/// Returns an error if the decoded
 /// bytes are not valid UTF-8.
 pub fn decode_in_place(s: &mut [u8]) -> Result<&str, crate::Error> {
     let len = do_decode(s);
-    std::str::from_utf8(&s[..len]).map_err(|_| crate::Error::LineMalformed)
+    std::str::from_utf8(&s[..len]).map_err(|_| crate::Error::new(crate::ErrorCode::ASS_INV_VALUE, "malformed line"))
 }
 
 /// In-place percent decoding. Returns the new length.

@@ -60,6 +60,15 @@ pub enum Response {
     Inquire(String, String),
 }
 
+impl From<Error> for Response {
+    fn from(e: Error) -> Self {
+        match e {
+            Error::Err { code, msg } => Response::Err(code, msg),
+            Error::Io(_) => Response::Err(ErrorCode::GENERAL, Some("I/O error".into())),
+        }
+    }
+}
+
 impl Response {
     /// OK with no message — zero-alloc, const-constructible.
     pub const OK: Self = Response::Ok(None);
@@ -95,10 +104,11 @@ impl Response {
     /// which already strips trailing LF/CRLF.
     pub fn parse(line: &mut [u8]) -> Result<Self, Error> {
         if line.is_empty() {
-            return Err(Error::LineMalformed);
+            return Err(Error::new(ErrorCode::ASS_INV_VALUE, "malformed line"));
         }
 
-        let line_str = std::str::from_utf8(line).map_err(|_| Error::LineMalformed)?;
+        let line_str = std::str::from_utf8(line)
+            .map_err(|_| Error::new(ErrorCode::ASS_INV_VALUE, "malformed line"))?;
 
         // OK [message]
         if let Some(rest) = line_str.strip_prefix("OK") {
@@ -110,7 +120,9 @@ impl Response {
         if let Some(rest) = line_str.strip_prefix("ERR ") {
             let mut parts = rest.splitn(2, ' ');
             let code_str = parts.next().unwrap_or("");
-            let code: u32 = code_str.parse().map_err(|_| Error::LineMalformed)?;
+            let code: u32 = code_str
+                .parse()
+                .map_err(|_| Error::new(ErrorCode::ASS_INV_VALUE, "malformed line"))?;
             let msg = parts.next().map(|s| s.to_string());
             return Ok(Response::Err(ErrorCode(code), msg));
         }
@@ -135,7 +147,7 @@ impl Response {
             return Ok(Response::Data(decoded.as_bytes().to_vec()));
         }
         if line_str == "D" {
-            return Ok(Response::Data(vec![]));
+            return Err(Error::new(ErrorCode::ASS_INV_VALUE, "bare D line"));
         }
 
         // INQUIRE keyword [params]
@@ -146,7 +158,7 @@ impl Response {
             return Ok(Response::Inquire(keyword, params));
         }
 
-        Err(Error::LineMalformed)
+        Err(Error::new(ErrorCode::ASS_INV_VALUE, "malformed line"))
     }
 
     /// Write this response to the given writer.
@@ -203,7 +215,7 @@ fn write_ok<W: Write>(w: &mut W, msg: Option<&str>) -> Result<usize, Error> {
         Some(msg) => {
             let total = 3 + msg.len() + 1;
             if total > MAX_LINE_SIZE {
-                return Err(Error::LineTooLong);
+                return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
             }
             let mut buf = [0u8; MAX_LINE_SIZE];
             buf[0] = b'O';
@@ -225,7 +237,7 @@ fn write_err<W: Write>(w: &mut W, code: ErrorCode, msg: Option<&str>) -> Result<
         None => {
             let total = 4 + code_str.len() + 1;
             if total > MAX_LINE_SIZE {
-                return Err(Error::LineTooLong);
+                return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
             }
             let mut buf = [0u8; MAX_LINE_SIZE];
             buf[0] = b'E';
@@ -240,17 +252,22 @@ fn write_err<W: Write>(w: &mut W, code: ErrorCode, msg: Option<&str>) -> Result<
         Some(msg) => {
             let total = 4 + code_str.len() + 1 + msg.len() + 1;
             if total > MAX_LINE_SIZE {
-                return Err(Error::LineTooLong);
+                return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
             }
             let mut buf = [0u8; MAX_LINE_SIZE];
             let mut pos = 0;
-            buf[pos] = b'E'; pos += 1;
-            buf[pos] = b'R'; pos += 1;
-            buf[pos] = b'R'; pos += 1;
-            buf[pos] = b' '; pos += 1;
+            buf[pos] = b'E';
+            pos += 1;
+            buf[pos] = b'R';
+            pos += 1;
+            buf[pos] = b'R';
+            pos += 1;
+            buf[pos] = b' ';
+            pos += 1;
             buf[pos..pos + code_str.len()].copy_from_slice(code_str.as_bytes());
             pos += code_str.len();
-            buf[pos] = b' '; pos += 1;
+            buf[pos] = b' ';
+            pos += 1;
             buf[pos..pos + msg.len()].copy_from_slice(msg.as_bytes());
             pos += msg.len();
             buf[pos] = b'\n';
@@ -265,7 +282,7 @@ fn write_status<W: Write>(w: &mut W, keyword: &str, value: &str) -> Result<usize
     if value.is_empty() {
         let total = 2 + keyword.len() + 1;
         if total > MAX_LINE_SIZE {
-            return Err(Error::LineTooLong);
+            return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
         }
         let mut buf = [0u8; MAX_LINE_SIZE];
         buf[0] = b'S';
@@ -277,15 +294,18 @@ fn write_status<W: Write>(w: &mut W, keyword: &str, value: &str) -> Result<usize
     } else {
         let total = 2 + keyword.len() + 1 + value.len() + 1;
         if total > MAX_LINE_SIZE {
-            return Err(Error::LineTooLong);
+            return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
         }
         let mut buf = [0u8; MAX_LINE_SIZE];
         let mut pos = 0;
-        buf[pos] = b'S'; pos += 1;
-        buf[pos] = b' '; pos += 1;
+        buf[pos] = b'S';
+        pos += 1;
+        buf[pos] = b' ';
+        pos += 1;
         buf[pos..pos + keyword.len()].copy_from_slice(keyword.as_bytes());
         pos += keyword.len();
-        buf[pos] = b' '; pos += 1;
+        buf[pos] = b' ';
+        pos += 1;
         buf[pos..pos + value.len()].copy_from_slice(value.as_bytes());
         pos += value.len();
         buf[pos] = b'\n';
@@ -298,7 +318,7 @@ fn write_status<W: Write>(w: &mut W, keyword: &str, value: &str) -> Result<usize
 fn write_comment<W: Write>(w: &mut W, comment: &str) -> Result<usize, Error> {
     let total = 2 + comment.len() + 1;
     if total > MAX_LINE_SIZE {
-        return Err(Error::LineTooLong);
+        return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
     }
     let mut buf = [0u8; MAX_LINE_SIZE];
     buf[0] = b'#';
@@ -314,7 +334,7 @@ fn write_data<W: Write>(w: &mut W, data: &[u8]) -> Result<usize, Error> {
     let max_encoded = MAX_LINE_SIZE - 3;
     let encoded_len = percent::encoded_len(data.len());
     if encoded_len > max_encoded {
-        return Err(Error::LineTooLong);
+        return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
     }
 
     let mut buf = [0u8; MAX_LINE_SIZE];
@@ -333,20 +353,19 @@ fn write_inquire<W: Write>(w: &mut W, keyword: &str, params: &str) -> Result<usi
     if params.is_empty() {
         let line = format!("INQUIRE {keyword}\n");
         if line.len() > MAX_LINE_SIZE {
-            return Err(Error::LineTooLong);
+            return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
         }
         w.write_all(line.as_bytes()).map_err(Error::Io)?;
         Ok(line.len())
     } else {
         let line = format!("INQUIRE {keyword} {params}\n");
         if line.len() > MAX_LINE_SIZE {
-            return Err(Error::LineTooLong);
+            return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
         }
         w.write_all(line.as_bytes()).map_err(Error::Io)?;
         Ok(line.len())
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -450,7 +469,10 @@ mod tests {
         let mut out = Vec::new();
         assert!(matches!(
             Response::data(data).write_to(&mut out),
-            Err(Error::LineTooLong)
+            Err(Error::Err {
+                code: ErrorCode::ASS_LINE_TOO_LONG,
+                ..
+            })
         ));
     }
 
@@ -489,10 +511,7 @@ mod tests {
 
     #[test]
     fn display_err() {
-        assert_eq!(
-            Response::err(ErrorCode::GENERAL, None).to_string(),
-            "ERR 1"
-        );
+        assert_eq!(Response::err(ErrorCode::GENERAL, None).to_string(), "ERR 1");
         assert_eq!(
             Response::err(ErrorCode::GENERAL, Some("bad".into())).to_string(),
             "ERR 1 bad"
@@ -507,7 +526,10 @@ mod tests {
         let mut out = Vec::new();
         assert!(matches!(
             Response::ok(msg).write_to(&mut out),
-            Err(Error::LineTooLong)
+            Err(Error::Err {
+                code: ErrorCode::ASS_LINE_TOO_LONG,
+                ..
+            })
         ));
     }
 }

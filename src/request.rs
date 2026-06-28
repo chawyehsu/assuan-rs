@@ -7,7 +7,7 @@ use std::fmt;
 use std::io::Write;
 
 use crate::MAX_LINE_SIZE;
-use crate::Error;
+use crate::error::{Error, ErrorCode};
 use crate::percent;
 
 /// An Assuan client request.
@@ -118,7 +118,7 @@ impl Request {
         };
 
         if line.is_empty() {
-            return Err(Error::LineMalformed);
+            return Err(Error::new(ErrorCode::ASS_INV_VALUE, "malformed line"));
         }
 
         // Split into command and args at the first space.
@@ -133,7 +133,7 @@ impl Request {
                 *b -= 32;
             }
         }
-        let cmd = std::str::from_utf8(cmd_part).map_err(|_| Error::LineMalformed)?;
+        let cmd = std::str::from_utf8(cmd_part).map_err(|_| Error::new(ErrorCode::ASS_INV_VALUE, "malformed line"))?;
 
         // Percent-decode args if present (skip the space delimiter).
         let args = if rest.len() > 1 {
@@ -141,8 +141,6 @@ impl Request {
         } else {
             None
         };
-
-        tracing::debug!(command = cmd, args = ?args, "parsed request");
 
         // Comment lines (# ...) are ignored per the Assuan spec.
         if cmd == "#" {
@@ -277,7 +275,7 @@ fn parse_option_args(args: &str) -> (String, String) {
 fn write_line<W: Write>(w: &mut W, line: &[u8]) -> Result<usize, Error> {
     let total = line.len() + 1;
     if total > MAX_LINE_SIZE {
-        return Err(Error::LineTooLong);
+        return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
     }
     w.write_all(line).map_err(Error::Io)?;
     w.write_all(b"\n").map_err(Error::Io)?;
@@ -289,7 +287,7 @@ fn write_data<W: Write>(w: &mut W, data: &[u8]) -> Result<usize, Error> {
     let max_encoded = MAX_LINE_SIZE - 3;
     let encoded_len = percent::encoded_len(data.len());
     if encoded_len > max_encoded {
-        return Err(Error::LineTooLong);
+        return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
     }
 
     let mut buf = [0u8; MAX_LINE_SIZE];

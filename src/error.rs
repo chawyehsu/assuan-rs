@@ -20,6 +20,8 @@ impl ErrorCode {
     pub const INV_PARAMETER: Self = Self(67);
     /// Internal error.
     pub const INTERNAL: Self = Self(63);
+    /// Not implemented.
+    pub const NOT_IMPLEMENTED: Self = Self(69);
     /// Out of memory.
     pub const ENOMEM: Self = Self(86);
     /// Operation cancelled.
@@ -92,19 +94,40 @@ impl fmt::Display for ErrorCode {
 /// Errors that can occur when using the crate.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    /// A line exceeded [`MAX_LINE_SIZE`](crate::MAX_LINE_SIZE) bytes.
-    #[error("line too long")]
-    LineTooLong,
-
-    /// A line is not valid UTF-8.
-    ///
-    /// Per Assuan protocol specifications, lines must be valid UTF-8.
-    #[error("line is not valid UTF-8")]
-    LineMalformed,
-
     /// An I/O error occurred.
     #[error("I/O: {0}")]
     Io(#[from] std::io::Error),
+
+    /// A protocol-level error to be sent as an `ERR` response.
+    #[error("ERR {code}{}", msg.as_deref().unwrap_or(""))]
+    Err {
+        /// The error code.
+        code: ErrorCode,
+        /// Optional error message.
+        msg: Option<String>,
+    },
+}
+
+impl Error {
+    /// Create a new protocol-level error with the given code and message.
+    ///
+    /// ```
+    /// use assuan::{Error, ErrorCode};
+    ///
+    /// let e = Error::new(ErrorCode::GENERAL, "something broke");
+    /// ```
+    pub fn new(code: ErrorCode, msg: impl Into<String>) -> Self {
+        Error::Err {
+            code,
+            msg: Some(msg.into()),
+        }
+    }
+}
+
+impl From<ErrorCode> for Error {
+    fn from(code: ErrorCode) -> Self {
+        Error::Err { code, msg: None }
+    }
 }
 
 #[cfg(test)]
@@ -121,5 +144,25 @@ mod tests {
     fn error_code_equality() {
         assert_eq!(ErrorCode::GENERAL, ErrorCode(1));
         assert_ne!(ErrorCode::GENERAL, ErrorCode(2));
+    }
+
+    #[test]
+    fn error_new_with_str() {
+        let e = Error::new(ErrorCode::GENERAL, "oops");
+        assert!(matches!(e, Error::Err { code: ErrorCode::GENERAL, msg: Some(s) } if s == "oops"));
+    }
+
+    #[test]
+    fn error_new_with_string() {
+        let e = Error::new(ErrorCode::ASS_UNKNOWN_CMD, "bad cmd".to_string());
+        assert!(
+            matches!(e, Error::Err { code: ErrorCode::ASS_UNKNOWN_CMD, msg: Some(s) } if s == "bad cmd")
+        );
+    }
+
+    #[test]
+    fn error_from_code() {
+        let e: Error = ErrorCode::CANCELED.into();
+        assert!(matches!(e, Error::Err { code: ErrorCode::CANCELED, msg: None }));
     }
 }

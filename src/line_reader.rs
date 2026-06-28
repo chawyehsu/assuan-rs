@@ -7,7 +7,7 @@
 use std::io::{self, Read};
 
 use crate::MAX_LINE_SIZE;
-use crate::error::Error;
+use crate::error::{Error, ErrorCode};
 
 /// Buffered line reader with a fixed internal buffer.
 ///
@@ -20,7 +20,7 @@ use crate::error::Error;
 /// decode percent-encoded data in-place without allocation.
 ///
 /// Lines longer than [`MAX_LINE_SIZE`] (1000 bytes) cause an
-/// [`Error::LineTooLong`] return.
+/// `ErrorCode::ASS_LINE_TOO_LONG` error return.
 pub struct LineReader<R: Read> {
     /// The underlying reader.
     reader: R,
@@ -33,6 +33,12 @@ pub struct LineReader<R: Read> {
 
     /// Position of the last newline found in the buffer, if any.
     newline_found: Option<usize>,
+}
+
+impl<R: Read> Read for LineReader<R> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.reader.read(buf)
+    }
 }
 
 impl<R: Read> LineReader<R> {
@@ -52,10 +58,7 @@ impl<R: Read> LineReader<R> {
     /// without trailing `\n` or `\r\n`. The returned slice is valid until the
     /// next call to `read`.
     ///
-    /// Matches libassuan behavior: CRLF and LF line endings both produce the
-    /// same clean output with no trailing CR.
-    ///
-    /// Returns [`Error::LineTooLong`] if a line exceeds [`MAX_LINE_SIZE`].
+    /// Returns `ASS_LINE_TOO_LONG` error if a line exceeds [`MAX_LINE_SIZE`].
     pub fn read(&mut self) -> Result<Option<&mut [u8]>, Error> {
         // If the previous read found a newline, compact the buffer:
         // move leftover bytes to the front.
@@ -79,11 +82,7 @@ impl<R: Read> LineReader<R> {
         // Read until we find a newline or fill the buffer.
         loop {
             if self.bytes_read >= MAX_LINE_SIZE {
-                tracing::warn!(
-                    "line too long ({} bytes), limit is {MAX_LINE_SIZE}",
-                    self.bytes_read
-                );
-                return Err(Error::LineTooLong);
+                return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
             }
 
             let n = match self.reader.read(&mut self.buffer[self.bytes_read..]) {
@@ -100,10 +99,6 @@ impl<R: Read> LineReader<R> {
                 // Partial line at EOF — return it (some implementations do this).
                 let end = self.bytes_read;
                 self.bytes_read = 0;
-                tracing::trace!(
-                    "<< {} (partial EOF)",
-                    String::from_utf8_lossy(&self.buffer[..end])
-                );
                 return Ok(Some(&mut self.buffer[..end]));
             }
 
@@ -118,12 +113,10 @@ impl<R: Read> LineReader<R> {
                 let abs_pos = search_from + pos;
                 self.newline_found = Some(abs_pos);
                 let end = strip_cr(&self.buffer[..abs_pos]);
-                tracing::trace!("<< {}", String::from_utf8_lossy(&self.buffer[..end]));
                 return Ok(Some(&mut self.buffer[..end]));
             }
         }
     }
-
 }
 
 /// Strip a trailing `\r` from a byte slice, returning the new length.
@@ -180,7 +173,10 @@ mod tests {
         let mut reader = LineReader::new(io::Cursor::new(long_line));
         assert!(matches!(
             reader.read(),
-            Err(Error::LineTooLong)
+            Err(Error::Err {
+                code: ErrorCode::ASS_LINE_TOO_LONG,
+                ..
+            })
         ));
     }
 

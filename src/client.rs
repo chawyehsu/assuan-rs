@@ -85,14 +85,4 @@ impl<R: Read, W: Write> Client<R, W> {
         let resp = Response::parse(line)?;
         Ok(Some(resp))
     }
-
-    /// Borrow the underlying reader.
-    pub fn reader(&self) -> &R {
-        self.line_reader.reader()
-    }
-
-    /// Mutably borrow the underlying reader.
-    pub fn reader_mut(&mut self) -> &mut R {
-        self.line_reader.reader_mut()
-    }
 }

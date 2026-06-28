@@ -82,14 +82,4 @@ impl<R: Read, W: Write> Server<R, W> {
             }
         }
     }
-
-    /// Borrow the underlying reader.
-    pub fn reader(&self) -> &R {
-        self.line_reader.reader()
-    }
-
-    /// Mutably borrow the underlying reader.
-    pub fn reader_mut(&mut self) -> &mut R {
-        self.line_reader.reader_mut()
-    }
 }

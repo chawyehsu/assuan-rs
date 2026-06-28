@@ -124,15 +124,6 @@ impl<R: Read> LineReader<R> {
         }
     }
 
-    /// Borrow the underlying reader.
-    pub fn reader(&self) -> &R {
-        &self.reader
-    }
-
-    /// Mutably borrow the underlying reader.
-    pub fn reader_mut(&mut self) -> &mut R {
-        &mut self.reader
-    }
 }
 
 /// Strip a trailing `\r` from a byte slice, returning the new length.

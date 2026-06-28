@@ -7,7 +7,6 @@
 //! It focuses on protocol-level primitives only:
 //! - **Reading**: [`LineReader`] — buffered line reader with 1000-byte line limit
 //! - **Parsing**: [`Request`] — parse a line into command + arguments
-//! - **Writing**: [`LineWriter`] — buffered line writer with 1000-byte line limit
 //! - **Responses**: [`Response`] — typed response lines with owned data
 //! - **Server**: [`Server`] — concrete server with `send`/`recv`
 //! - **Client**: [`Client`] — concrete client with `send`/`recv`
@@ -19,7 +18,7 @@
 mod client;
 mod error;
 mod line_reader;
-pub mod line_writer;
+mod line_writer;
 mod percent;
 mod request;
 mod response;

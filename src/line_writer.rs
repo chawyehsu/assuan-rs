@@ -48,11 +48,14 @@ impl<W: Write> LineWriter<W> {
             return Err(Error::LineTooLong);
         }
 
-        let mut buf = [0u8; MAX_LINE_SIZE - 1]; // leave room for \n in write
+        let mut buf = [0u8; MAX_LINE_SIZE];
         buf[0] = b'D';
         buf[1] = b' ';
         let n = percent::encode(data, &mut buf[2..]);
-        self.write(&buf[..2 + n])
+        buf[2 + n] = b'\n';
+        let total = 2 + n + 1;
+        self.writer.write_all(&buf[..total]).map_err(Error::Io)?;
+        Ok(total)
     }
 
     /// Write an OK line (`OK [message]\n`).

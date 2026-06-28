@@ -14,7 +14,7 @@ use crate::error::Error;
 /// Reads one line at a time from an [`io::Read`] source. Lines are delimited by
 /// `\n`. The trailing `\n` is stripped from the returned slice. The returned
 /// `&mut [u8]` borrows from the internal buffer and is valid until the next
-/// call to [`read_line`](Self::read_line).
+/// call to [`read`](Self::read).
 ///
 /// Returns a mutable slice so that callers (e.g., [`Request::parse`]) can
 /// decode percent-encoded data in-place without allocation.
@@ -46,14 +46,14 @@ impl LineReader {
     ///
     /// Returns `Ok(None)` on clean EOF (no partial data). Returns the line
     /// without trailing `\n` or `\r\n`. The returned slice is valid until the
-    /// next call to `read_line`.
+    /// next call to `read`.
     ///
     /// Matches libassuan behavior: CRLF and LF line endings both produce the
     /// same clean output with no trailing CR.
     ///
     /// Returns [`Error::LineTooLong`] if a line exceeds [`MAX_LINE_SIZE`].
-    pub fn read_line<R: Read>(&mut self, reader: &mut R) -> Result<Option<&mut [u8]>, Error> {
-        // If the previous read_line found a newline, compact the buffer:
+    pub fn read<R: Read>(&mut self, reader: &mut R) -> Result<Option<&mut [u8]>, Error> {
+        // If the previous read found a newline, compact the buffer:
         // move leftover bytes to the front.
         if let Some(newline_pos) = self.newline_found.take() {
             let consumed = newline_pos + 1;
@@ -144,14 +144,14 @@ mod tests {
     fn reads_nothing() {
         let mut reader = LineReader::new();
         let mut input = io::Cursor::new(b"" as &[u8]);
-        assert!(reader.read_line(&mut input).unwrap().is_none());
+        assert!(reader.read(&mut input).unwrap().is_none());
     }
 
     #[test]
     fn reads_one_line() {
         let mut reader = LineReader::new();
         let mut input = io::Cursor::new(b"a line\n" as &[u8]);
-        let line = reader.read_line(&mut input).unwrap().unwrap();
+        let line = reader.read(&mut input).unwrap().unwrap();
         assert_eq!(line, b"a line");
     }
 
@@ -160,10 +160,10 @@ mod tests {
         let mut reader = LineReader::new();
         let mut input = io::Cursor::new(b"line1\nline2\n" as &[u8]);
 
-        let line1 = reader.read_line(&mut input).unwrap().unwrap();
+        let line1 = reader.read(&mut input).unwrap().unwrap();
         assert_eq!(line1, b"line1");
 
-        let line2 = reader.read_line(&mut input).unwrap().unwrap();
+        let line2 = reader.read(&mut input).unwrap().unwrap();
         assert_eq!(line2, b"line2");
     }
 
@@ -172,10 +172,10 @@ mod tests {
         let mut reader = LineReader::new();
         let mut input = io::Cursor::new(b"a line\n" as &[u8]);
 
-        let line = reader.read_line(&mut input).unwrap().unwrap();
+        let line = reader.read(&mut input).unwrap().unwrap();
         assert_eq!(line, b"a line");
 
-        let line2 = reader.read_line(&mut input).unwrap();
+        let line2 = reader.read(&mut input).unwrap();
         assert!(line2.is_none());
     }
 
@@ -186,7 +186,7 @@ mod tests {
         let long_line = vec![b'x'; MAX_LINE_SIZE + 1];
         let mut input = io::Cursor::new(long_line);
         assert!(matches!(
-            reader.read_line(&mut input),
+            reader.read(&mut input),
             Err(Error::LineTooLong)
         ));
     }
@@ -196,7 +196,7 @@ mod tests {
         let mut reader = LineReader::new();
         // A line without trailing newline at EOF.
         let mut input = io::Cursor::new(b"partial" as &[u8]);
-        let line = reader.read_line(&mut input).unwrap().unwrap();
+        let line = reader.read(&mut input).unwrap().unwrap();
         assert_eq!(line, b"partial");
     }
 
@@ -204,7 +204,7 @@ mod tests {
     fn strips_crlf() {
         let mut reader = LineReader::new();
         let mut input = io::Cursor::new(b"a line\r\n" as &[u8]);
-        let line = reader.read_line(&mut input).unwrap().unwrap();
+        let line = reader.read(&mut input).unwrap().unwrap();
         assert_eq!(line, b"a line");
     }
 
@@ -212,7 +212,7 @@ mod tests {
     fn strips_lf_only() {
         let mut reader = LineReader::new();
         let mut input = io::Cursor::new(b"a line\n" as &[u8]);
-        let line = reader.read_line(&mut input).unwrap().unwrap();
+        let line = reader.read(&mut input).unwrap().unwrap();
         assert_eq!(line, b"a line");
     }
 
@@ -221,10 +221,10 @@ mod tests {
         let mut reader = LineReader::new();
         let mut input = io::Cursor::new(b"line1\r\nline2\r\n" as &[u8]);
 
-        let line1 = reader.read_line(&mut input).unwrap().unwrap();
+        let line1 = reader.read(&mut input).unwrap().unwrap();
         assert_eq!(line1, b"line1");
 
-        let line2 = reader.read_line(&mut input).unwrap().unwrap();
+        let line2 = reader.read(&mut input).unwrap().unwrap();
         assert_eq!(line2, b"line2");
     }
 }

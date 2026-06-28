@@ -91,7 +91,7 @@ impl Response {
 
     /// Parse a raw line into a response.
     ///
-    /// The input should come from [`LineReader::read_line`](crate::LineReader::read_line),
+    /// The input should come from [`LineReader::read`](crate::LineReader::read),
     /// which already strips trailing LF/CRLF.
     pub fn parse(line: &mut [u8]) -> Result<Self, Error> {
         if line.is_empty() {

@@ -33,31 +33,31 @@ impl<R: Read, W: Write> Client<R, W> {
     /// Returns the number of bytes written.
     pub fn send(&mut self, req: Request) -> Result<usize, Error> {
         match req {
-            Request::Bye => self.line_writer.write_line(b"BYE"),
-            Request::Reset => self.line_writer.write_line(b"RESET"),
-            Request::Nop => self.line_writer.write_line(b"NOP"),
-            Request::End => self.line_writer.write_line(b"END"),
-            Request::Cancel => self.line_writer.write_line(b"CAN"),
-            Request::Help => self.line_writer.write_line(b"HELP"),
-            Request::Quit => self.line_writer.write_line(b"QUIT"),
-            Request::Auth => self.line_writer.write_line(b"AUTH"),
+            Request::Bye => self.line_writer.write(b"BYE"),
+            Request::Reset => self.line_writer.write(b"RESET"),
+            Request::Nop => self.line_writer.write(b"NOP"),
+            Request::End => self.line_writer.write(b"END"),
+            Request::Cancel => self.line_writer.write(b"CAN"),
+            Request::Help => self.line_writer.write(b"HELP"),
+            Request::Quit => self.line_writer.write(b"QUIT"),
+            Request::Auth => self.line_writer.write(b"AUTH"),
             Request::Option { key, value } => {
                 if value.is_empty() {
                     let line = format!("OPTION {key}");
-                    self.line_writer.write_line(line.as_bytes())
+                    self.line_writer.write(line.as_bytes())
                 } else {
                     let line = format!("OPTION {key}={value}");
-                    self.line_writer.write_line(line.as_bytes())
+                    self.line_writer.write(line.as_bytes())
                 }
             }
             Request::Data(data) => self.line_writer.write_data(&data),
             Request::Comment(s) => {
                 let line = format!("# {s}");
-                self.line_writer.write_line(line.as_bytes())
+                self.line_writer.write(line.as_bytes())
             }
             Request::Command { name, args } => {
                 match args {
-                    None => self.line_writer.write_line(name.as_bytes()),
+                    None => self.line_writer.write(name.as_bytes()),
                     Some(args) => {
                         // Percent-encode the args.
                         let encoded_len = crate::percent::encoded_len(args.len());
@@ -67,7 +67,7 @@ impl<R: Read, W: Write> Client<R, W> {
                         let mut enc_buf = vec![0u8; encoded_len];
                         let n = crate::percent::encode(args.as_bytes(), &mut enc_buf);
                         buf.extend_from_slice(&enc_buf[..n]);
-                        self.line_writer.write_line(&buf)
+                        self.line_writer.write(&buf)
                     }
                 }
             }
@@ -78,7 +78,7 @@ impl<R: Read, W: Write> Client<R, W> {
     ///
     /// Returns `Ok(None)` on clean EOF.
     pub fn recv(&mut self) -> Result<Option<Response>, Error> {
-        let line = match self.line_reader.read_line(&mut self.reader) {
+        let line = match self.line_reader.read(&mut self.reader) {
             Ok(Some(line)) => line,
             Ok(None) => return Ok(None),
             Err(e) => return Err(e),

@@ -27,7 +27,7 @@ impl<W: Write> LineWriter<W> {
     ///
     /// The line must not exceed [`MAX_LINE_SIZE`] bytes (including the `\n`).
     /// Returns the number of bytes written.
-    pub fn write_line(&mut self, line: &[u8]) -> Result<usize, Error> {
+    pub fn write(&mut self, line: &[u8]) -> Result<usize, Error> {
         let total = line.len() + 1; // +1 for \n
         if total > MAX_LINE_SIZE {
             return Err(Error::LineTooLong);
@@ -48,20 +48,20 @@ impl<W: Write> LineWriter<W> {
             return Err(Error::LineTooLong);
         }
 
-        let mut buf = [0u8; MAX_LINE_SIZE - 1]; // leave room for \n in write_line
+        let mut buf = [0u8; MAX_LINE_SIZE - 1]; // leave room for \n in write
         buf[0] = b'D';
         buf[1] = b' ';
         let n = percent::encode(data, &mut buf[2..]);
-        self.write_line(&buf[..2 + n])
+        self.write(&buf[..2 + n])
     }
 
     /// Write an OK line (`OK [message]\n`).
     pub fn write_ok(&mut self, msg: Option<&str>) -> Result<usize, Error> {
         match msg {
-            None => self.write_line(b"OK"),
+            None => self.write(b"OK"),
             Some(msg) => {
                 let line = format!("OK {msg}");
-                self.write_line(line.as_bytes())
+                self.write(line.as_bytes())
             }
         }
     }
@@ -71,11 +71,11 @@ impl<W: Write> LineWriter<W> {
         match msg {
             None => {
                 let line = format!("ERR {code}");
-                self.write_line(line.as_bytes())
+                self.write(line.as_bytes())
             }
             Some(msg) => {
                 let line = format!("ERR {code} {msg}");
-                self.write_line(line.as_bytes())
+                self.write(line.as_bytes())
             }
         }
     }
@@ -84,27 +84,27 @@ impl<W: Write> LineWriter<W> {
     pub fn write_status(&mut self, keyword: &str, value: &str) -> Result<usize, Error> {
         if value.is_empty() {
             let line = format!("S {keyword}");
-            self.write_line(line.as_bytes())
+            self.write(line.as_bytes())
         } else {
             let line = format!("S {keyword} {value}");
-            self.write_line(line.as_bytes())
+            self.write(line.as_bytes())
         }
     }
 
     /// Write a comment line (`# comment\n`).
     pub fn write_comment(&mut self, comment: &str) -> Result<usize, Error> {
         let line = format!("# {comment}");
-        self.write_line(line.as_bytes())
+        self.write(line.as_bytes())
     }
 
     /// Write an INQUIRE line (`INQUIRE keyword [params]\n`).
     pub fn write_inquire(&mut self, keyword: &str, params: &str) -> Result<usize, Error> {
         if params.is_empty() {
             let line = format!("INQUIRE {keyword}");
-            self.write_line(line.as_bytes())
+            self.write(line.as_bytes())
         } else {
             let line = format!("INQUIRE {keyword} {params}");
-            self.write_line(line.as_bytes())
+            self.write(line.as_bytes())
         }
     }
 }
@@ -119,45 +119,45 @@ mod tests {
         (lw.writer, n)
     }
 
-    // -- write_line --
+    // -- write --
 
     #[test]
-    fn write_line_simple() {
-        let (out, n) = collect(|lw| lw.write_line(b"OK"));
+    fn write_simple() {
+        let (out, n) = collect(|lw| lw.write(b"OK"));
         assert_eq!(out, b"OK\n");
         assert_eq!(n, 3);
     }
 
     #[test]
-    fn write_line_empty() {
-        let (out, n) = collect(|lw| lw.write_line(b""));
+    fn write_empty() {
+        let (out, n) = collect(|lw| lw.write(b""));
         assert_eq!(out, b"\n");
         assert_eq!(n, 1);
     }
 
     #[test]
-    fn write_line_max_length() {
+    fn write_max_length() {
         // 999 bytes + 1 newline = 1000 (exactly MAX_LINE_SIZE)
         let line = vec![b'x'; 999];
-        let (out, n) = collect(|lw| lw.write_line(&line));
+        let (out, n) = collect(|lw| lw.write(&line));
         assert_eq!(n, 1000);
         assert_eq!(out.len(), 1000);
         assert_eq!(out[999], b'\n');
     }
 
     #[test]
-    fn write_line_too_long() {
+    fn write_too_long() {
         // 1000 bytes + 1 newline = 1001 > MAX_LINE_SIZE
         let line = vec![b'x'; 1000];
         let mut lw = LineWriter::new(Vec::new());
-        assert!(matches!(lw.write_line(&line), Err(Error::LineTooLong)));
+        assert!(matches!(lw.write(&line), Err(Error::LineTooLong)));
     }
 
     #[test]
-    fn write_line_multiple() {
+    fn write_multiple() {
         let mut lw = LineWriter::new(Vec::new());
-        lw.write_line(b"line1").unwrap();
-        lw.write_line(b"line2").unwrap();
+        lw.write(b"line1").unwrap();
+        lw.write(b"line2").unwrap();
         assert_eq!(lw.writer, b"line1\nline2\n");
     }
 

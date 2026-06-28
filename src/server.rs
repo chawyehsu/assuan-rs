@@ -52,7 +52,7 @@ impl<R: Read, W: Write> Server<R, W> {
     /// Returns `Ok(None)` on BYE or clean EOF.
     pub fn recv(&mut self) -> Result<Option<Request>, Error> {
         loop {
-            let line = match self.line_reader.read_line(&mut self.reader) {
+            let line = match self.line_reader.read(&mut self.reader) {
                 Ok(Some(line)) => line,
                 Ok(None) => return Ok(None),
                 Err(e) => return Err(e),

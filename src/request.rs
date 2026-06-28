@@ -98,7 +98,7 @@ pub enum Request {
 impl Request {
     /// Parse a raw line into a request.
     ///
-    /// The input should come from [`LineReader::read_line`](crate::LineReader::read_line),
+    /// The input should come from [`LineReader::read`](crate::LineReader::read),
     /// which already strips trailing LF/CRLF. The command name is uppercased
     /// in-place; arguments are percent-decoded.
     ///
@@ -129,7 +129,7 @@ impl Request {
 
         // Uppercase the command name in-place.
         for b in cmd_part.iter_mut() {
-            if *b >= b'a' && *b <= b'z' {
+            if b.is_ascii_lowercase() {
                 *b -= 32;
             }
         }

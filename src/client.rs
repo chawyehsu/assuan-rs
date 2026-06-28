@@ -13,8 +13,7 @@ use crate::response::Response;
 /// Wraps a reader and writer, providing typed `send`/`recv` for Assuan
 /// protocol communication.
 pub struct Client<R: Read, W: Write> {
-    reader: R,
-    line_reader: LineReader,
+    line_reader: LineReader<R>,
     line_writer: LineWriter<W>,
 }
 
@@ -22,8 +21,7 @@ impl<R: Read, W: Write> Client<R, W> {
     /// Create a new client with the given reader and writer.
     pub fn new(reader: R, writer: W) -> Self {
         Self {
-            reader,
-            line_reader: LineReader::new(),
+            line_reader: LineReader::new(reader),
             line_writer: LineWriter::new(writer),
         }
     }
@@ -78,7 +76,7 @@ impl<R: Read, W: Write> Client<R, W> {
     ///
     /// Returns `Ok(None)` on clean EOF.
     pub fn recv(&mut self) -> Result<Option<Response>, Error> {
-        let line = match self.line_reader.read(&mut self.reader) {
+        let line = match self.line_reader.read() {
             Ok(Some(line)) => line,
             Ok(None) => return Ok(None),
             Err(e) => return Err(e),
@@ -86,5 +84,15 @@ impl<R: Read, W: Write> Client<R, W> {
 
         let resp = Response::parse(line)?;
         Ok(Some(resp))
+    }
+
+    /// Borrow the underlying reader.
+    pub fn reader(&self) -> &R {
+        self.line_reader.reader()
+    }
+
+    /// Mutably borrow the underlying reader.
+    pub fn reader_mut(&mut self) -> &mut R {
+        self.line_reader.reader_mut()
     }
 }

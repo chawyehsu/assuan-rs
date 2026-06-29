@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/chawyehsu/assuan-rs/compare/v0.1.0...v0.1.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* exclude Cargo.lock file from package ([5217010](https://github.com/chawyehsu/assuan-rs/commit/5217010d0b664c76922c87b612584cf63f0280ad))
+
 ## [0.1.0](https://github.com/chawyehsu/assuan-rs/compare/v0.0.0...v0.1.0) (2026-06-29)
 
 

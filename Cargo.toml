@@ -1,6 +1,6 @@
 [package]
 name = "assuan"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Chawye Hsu <su+git@chawyehsu.com>"]
 description = "Assuan protocol primitives in Rust"
 license = "MIT OR Apache-2.0"

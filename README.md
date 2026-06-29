@@ -3,7 +3,8 @@
 > Assuan protocol primitives in Rust
 
 [![crates-svg]][crates-url]
-[![license][license-badge]](LICENSE)
+[![license][license-badge]](LICENSE-APACHE)
+[![codecov][codecov-badge]][codecov]
 
 A library of reusable building blocks for implementing
 [Assuan protocol](https://www.gnupg.org/documentation/manuals/assuan/index.html)
@@ -100,4 +101,6 @@ if let Some(resp) = client.recv()? {
 
 [crates-svg]: https://img.shields.io/crates/v/assuan.svg?style=flat&logo=rust
 [crates-url]: https://crates.io/crates/assuan
-[license-badge]: https://img.shields.io/github/license/chawyehsu/pinentry-rat?style=flat&logo=spdx
+[license-badge]: https://img.shields.io/github/license/chawyehsu/assuan-rs?style=flat&logo=spdx
+[codecov-badge]: https://img.shields.io/codecov/c/gh/chawyehsu/assuan-rs?style=flat&logo=codecov
+[codecov]: https://codecov.io/github/chawyehsu/assuan-rs

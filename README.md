@@ -5,6 +5,7 @@
 [![crates-svg]][crates-url]
 [![license][license-badge]](LICENSE-APACHE)
 [![codecov][codecov-badge]][codecov]
+[![docs-svg]][docs-url]
 
 A library of reusable building blocks for implementing
 [Assuan protocol](https://www.gnupg.org/documentation/manuals/assuan/index.html)
@@ -104,3 +105,5 @@ if let Some(resp) = client.recv()? {
 [license-badge]: https://img.shields.io/github/license/chawyehsu/assuan-rs?style=flat&logo=spdx
 [codecov-badge]: https://img.shields.io/codecov/c/gh/chawyehsu/assuan-rs?style=flat&logo=codecov
 [codecov]: https://codecov.io/github/chawyehsu/assuan-rs
+[docs-svg]: https://docs.rs/assuan/badge.svg
+[docs-url]: https://docs.rs/assuan

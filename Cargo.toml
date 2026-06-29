@@ -9,6 +9,7 @@ edition = "2024"
 readme = "README.md"
 categories = ["network-programming"]
 keywords = ["assuan", "gpg", "pinentry", "ipc"]
+include = ["src/**/*.rs", "Cargo.toml", "README.md", "LICENSE*", "CHANGELOG.md"]
 
 [dependencies]
 thiserror = "2"

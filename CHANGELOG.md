@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/chawyehsu/assuan-rs/compare/v0.1.1...v0.1.2) (2026-06-29)
+
+
+### Bug Fixes
+
+* update cargo.lock and revert 5217010d ([7ddb100](https://github.com/chawyehsu/assuan-rs/commit/7ddb1008f4210f06264eda7c750148692049b680))
+
 ## [0.1.1](https://github.com/chawyehsu/assuan-rs/compare/v0.1.0...v0.1.1) (2026-06-29)
 
 

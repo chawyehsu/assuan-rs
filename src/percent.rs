@@ -45,7 +45,8 @@ pub const fn encoded_len(src_len: usize) -> usize {
 /// bytes are not valid UTF-8.
 pub fn decode_in_place(s: &mut [u8]) -> Result<&str, crate::Error> {
     let len = do_decode(s);
-    std::str::from_utf8(&s[..len]).map_err(|_| crate::Error::new(crate::ErrorCode::ASS_INV_VALUE, "malformed line"))
+    std::str::from_utf8(&s[..len])
+        .map_err(|_| crate::Error::new(crate::ErrorCode::ASS_INV_VALUE, "malformed line"))
 }
 
 /// In-place percent decoding. Returns the new length.
@@ -53,7 +54,8 @@ fn do_decode(bytes: &mut [u8]) -> usize {
     let mut write = 0;
     let mut read = 0;
     while read < bytes.len() {
-        if bytes[read] == b'%' && read + 2 < bytes.len()
+        if bytes[read] == b'%'
+            && read + 2 < bytes.len()
             && let (Some(hi), Some(lo)) = (hex_val(bytes[read + 1]), hex_val(bytes[read + 2]))
         {
             bytes[write] = (hi << 4) | lo;
@@ -212,7 +214,12 @@ mod tests {
             let n = encode(input, &mut encoded);
             encoded.truncate(n);
             let decoded = decode_in_place(&mut encoded).unwrap();
-            assert_eq!(decoded.as_bytes(), *input, "roundtrip failed for {:?}", input);
+            assert_eq!(
+                decoded.as_bytes(),
+                *input,
+                "roundtrip failed for {:?}",
+                input
+            );
         }
     }
 

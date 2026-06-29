@@ -163,6 +163,12 @@ mod tests {
     #[test]
     fn error_from_code() {
         let e: Error = ErrorCode::CANCELED.into();
-        assert!(matches!(e, Error::Err { code: ErrorCode::CANCELED, msg: None }));
+        assert!(matches!(
+            e,
+            Error::Err {
+                code: ErrorCode::CANCELED,
+                msg: None
+            }
+        ));
     }
 }

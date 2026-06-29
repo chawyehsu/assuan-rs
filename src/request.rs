@@ -43,7 +43,6 @@ use crate::percent;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Request {
     // -- Protocol-level commands (defined by the Assuan spec) --
-
     /// Close the connection. Server responds with OK.
     Bye,
 
@@ -77,12 +76,10 @@ pub enum Request {
     Auth,
 
     // -- Wire-level --
-
     /// Data line (`D <data>`) — used during INQUIRE responses.
     Data(Vec<u8>),
 
     // -- Application command fallback --
-
     /// Comment line (`# ...`) — ignored per the Assuan spec.
     Comment(String),
 
@@ -133,7 +130,8 @@ impl Request {
                 *b -= 32;
             }
         }
-        let cmd = std::str::from_utf8(cmd_part).map_err(|_| Error::new(ErrorCode::ASS_INV_VALUE, "malformed line"))?;
+        let cmd = std::str::from_utf8(cmd_part)
+            .map_err(|_| Error::new(ErrorCode::ASS_INV_VALUE, "malformed line"))?;
 
         // Percent-decode args if present (skip the space delimiter).
         let args = if rest.len() > 1 {
@@ -206,21 +204,19 @@ impl Request {
                 let line = format!("# {s}");
                 write_line(w, line.as_bytes())
             }
-            Request::Command { name, args } => {
-                match args {
-                    None => write_line(w, name.as_bytes()),
-                    Some(args) => {
-                        let encoded_len = percent::encoded_len(args.len());
-                        let mut buf = Vec::with_capacity(name.len() + 1 + encoded_len);
-                        buf.extend_from_slice(name.as_bytes());
-                        buf.push(b' ');
-                        let mut enc_buf = vec![0u8; encoded_len];
-                        let n = percent::encode(args.as_bytes(), &mut enc_buf);
-                        buf.extend_from_slice(&enc_buf[..n]);
-                        write_line(w, &buf)
-                    }
+            Request::Command { name, args } => match args {
+                None => write_line(w, name.as_bytes()),
+                Some(args) => {
+                    let encoded_len = percent::encoded_len(args.len());
+                    let mut buf = Vec::with_capacity(name.len() + 1 + encoded_len);
+                    buf.extend_from_slice(name.as_bytes());
+                    buf.push(b' ');
+                    let mut enc_buf = vec![0u8; encoded_len];
+                    let n = percent::encode(args.as_bytes(), &mut enc_buf);
+                    buf.extend_from_slice(&enc_buf[..n]);
+                    write_line(w, &buf)
                 }
-            }
+            },
         }
     }
 }
@@ -311,34 +307,52 @@ mod tests {
     fn parse_command_only() {
         let mut line = b"GETPIN".to_vec();
         let req = Request::parse(&mut line).unwrap();
-        assert_eq!(req, Request::Command { name: "GETPIN".into(), args: None });
+        assert_eq!(
+            req,
+            Request::Command {
+                name: "GETPIN".into(),
+                args: None
+            }
+        );
     }
 
     #[test]
     fn parse_command_with_args() {
         let mut line = b"SETDESC Enter passphrase".to_vec();
         let req = Request::parse(&mut line).unwrap();
-        assert_eq!(req, Request::Command {
-            name: "SETDESC".into(),
-            args: Some("Enter passphrase".into()),
-        });
+        assert_eq!(
+            req,
+            Request::Command {
+                name: "SETDESC".into(),
+                args: Some("Enter passphrase".into()),
+            }
+        );
     }
 
     #[test]
     fn parse_lowercase_uppercased() {
         let mut line = b"getpin".to_vec();
         let req = Request::parse(&mut line).unwrap();
-        assert_eq!(req, Request::Command { name: "GETPIN".into(), args: None });
+        assert_eq!(
+            req,
+            Request::Command {
+                name: "GETPIN".into(),
+                args: None
+            }
+        );
     }
 
     #[test]
     fn parse_percent_decoded_args() {
         let mut line = b"SETDESC hello%20world".to_vec();
         let req = Request::parse(&mut line).unwrap();
-        assert_eq!(req, Request::Command {
-            name: "SETDESC".into(),
-            args: Some("hello world".into()),
-        });
+        assert_eq!(
+            req,
+            Request::Command {
+                name: "SETDESC".into(),
+                args: Some("hello world".into()),
+            }
+        );
     }
 
     #[test]
@@ -358,10 +372,13 @@ mod tests {
     fn parse_option_with_equals() {
         let mut line = b"OPTION display=:0".to_vec();
         let req = Request::parse(&mut line).unwrap();
-        assert_eq!(req, Request::Option {
-            key: "display".into(),
-            value: ":0".into(),
-        });
+        assert_eq!(
+            req,
+            Request::Option {
+                key: "display".into(),
+                value: ":0".into(),
+            }
+        );
     }
 
     #[test]
@@ -420,18 +437,24 @@ mod tests {
     #[test]
     fn write_command_no_args() {
         let mut buf = Vec::new();
-        Request::Command { name: "GETPIN".into(), args: None }
-            .write_to(&mut buf)
-            .unwrap();
+        Request::Command {
+            name: "GETPIN".into(),
+            args: None,
+        }
+        .write_to(&mut buf)
+        .unwrap();
         assert_eq!(buf, b"GETPIN\n");
     }
 
     #[test]
     fn write_command_with_args() {
         let mut buf = Vec::new();
-        Request::Command { name: "SETDESC".into(), args: Some("hello world".into()) }
-            .write_to(&mut buf)
-            .unwrap();
+        Request::Command {
+            name: "SETDESC".into(),
+            args: Some("hello world".into()),
+        }
+        .write_to(&mut buf)
+        .unwrap();
         // Spaces are NOT percent-encoded in command args (only in D data lines).
         assert_eq!(buf, b"SETDESC hello world\n");
     }
@@ -446,9 +469,12 @@ mod tests {
     #[test]
     fn write_option() {
         let mut buf = Vec::new();
-        Request::Option { key: "display".into(), value: ":0".into() }
-            .write_to(&mut buf)
-            .unwrap();
+        Request::Option {
+            key: "display".into(),
+            value: ":0".into(),
+        }
+        .write_to(&mut buf)
+        .unwrap();
         assert_eq!(buf, b"OPTION display=:0\n");
     }
 
@@ -484,11 +510,19 @@ mod tests {
     #[test]
     fn display_command() {
         assert_eq!(
-            Request::Command { name: "GETPIN".into(), args: None }.to_string(),
+            Request::Command {
+                name: "GETPIN".into(),
+                args: None
+            }
+            .to_string(),
             "GETPIN"
         );
         assert_eq!(
-            Request::Command { name: "SETDESC".into(), args: Some("hello".into()) }.to_string(),
+            Request::Command {
+                name: "SETDESC".into(),
+                args: Some("hello".into())
+            }
+            .to_string(),
             "SETDESC hello"
         );
     }

@@ -18,6 +18,8 @@ impl ErrorCode {
     pub const GENERAL: Self = Self(1);
     /// Invalid parameter / bad parameter.
     pub const INV_PARAMETER: Self = Self(67);
+    /// Operation timed out.
+    pub const TIMEOUT: Self = Self(62);
     /// Internal error.
     pub const INTERNAL: Self = Self(63);
     /// Not implemented.

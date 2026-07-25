@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/chawyehsu/assuan-rs/compare/v0.1.2...v0.1.3) (2026-07-25)
+
+
+### Bug Fixes
+
+* **error:** add TIMEOUT error variant ([aa954ac](https://github.com/chawyehsu/assuan-rs/commit/aa954acfc0dc5beee9cc725fe5b12a9c9a6e1bdf))
+
 ## [0.1.2](https://github.com/chawyehsu/assuan-rs/compare/v0.1.1...v0.1.2) (2026-06-29)
 
 

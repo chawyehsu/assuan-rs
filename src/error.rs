@@ -101,7 +101,7 @@ pub enum Error {
     Io(#[from] std::io::Error),
 
     /// A protocol-level error to be sent as an `ERR` response.
-    #[error("ERR {code}{}", msg.as_deref().unwrap_or(""))]
+    #[error("ERR {code}{}", msg.as_deref().map(|m| format!(" {m}")).unwrap_or_default())]
     Err {
         /// The error code.
         code: ErrorCode,

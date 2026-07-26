@@ -11,31 +11,59 @@ use std::fmt;
 pub struct ErrorCode(pub u32);
 
 impl ErrorCode {
-    // -- General codes (libgpg-error range 0–100) --
+    // -- General (libgpg-error range 0–200) --
     /// Success.
     pub const SUCCESS: Self = Self(0);
     /// General error.
     pub const GENERAL: Self = Self(1);
-    /// Invalid parameter / bad parameter.
-    pub const INV_PARAMETER: Self = Self(67);
+    /// Bad passphrase.
+    pub const BAD_PASSPHRASE: Self = Self(11);
+    /// Invalid passphrase.
+    pub const INV_PASSPHRASE: Self = Self(31);
+    /// Unexpected error.
+    pub const UNEXPECTED: Self = Self(38);
+    /// Invalid value.
+    pub const INV_VALUE: Self = Self(55);
+    /// No data.
+    pub const NO_DATA: Self = Self(58);
+    /// Bug.
+    pub const BUG: Self = Self(59);
+    /// Not supported.
+    pub const NOT_SUPPORTED: Self = Self(60);
     /// Operation timed out.
     pub const TIMEOUT: Self = Self(62);
     /// Internal error.
     pub const INTERNAL: Self = Self(63);
     /// Not implemented.
     pub const NOT_IMPLEMENTED: Self = Self(69);
-    /// Out of memory.
-    pub const ENOMEM: Self = Self(86);
+    /// Invalid data.
+    pub const INV_DATA: Self = Self(79);
+    /// Unspecific Assuan server fault
+    pub const ASSUAN_SERVER_FAULT: Self = Self(80);
+    /// General Assuan error.
+    pub const ASSUAN: Self = Self(81);
+    /// No pinentry.
+    pub const NO_PIN_ENTRY: Self = Self(85);
+    /// Pinentry error.
+    pub const PIN_ENTRY: Self = Self(86);
     /// Operation cancelled.
     pub const CANCELED: Self = Self(99);
     /// Not confirmed.
     pub const NOT_CONFIRMED: Self = Self(114);
-    /// Locale problem.
-    pub const LOCALE_PROBLEM: Self = Self(160);
+    /// A locale function failed.
+    pub const LOCALE_PROBLEM: Self = Self(166);
+    /// Unknown option.
+    pub const UNKNOWN_OPTION: Self = Self(174);
+    /// Unknown command.
+    pub const UNKNOWN_COMMAND: Self = Self(175);
+    /// No passphrase given.
+    pub const NO_PASSPHRASE: Self = Self(177);
     /// No PIN given.
     pub const NO_PIN: Self = Self(178);
+    /// Operation fully cancelled.
+    pub const FULLY_CANCELED: Self = Self(198);
 
-    // -- Assuan-specific codes (libgpg-error range 257–281) --
+    // -- Assuan-specific (libgpg-error range 257–281) --
     /// General IPC (Assuan) error.
     pub const ASS_GENERAL: Self = Self(257);
     /// IPC accept call failed.
@@ -66,6 +94,8 @@ impl ErrorCode {
     pub const ASS_READ_ERROR: Self = Self(270);
     /// IPC write error.
     pub const ASS_WRITE_ERROR: Self = Self(271);
+    /// Reserved.
+    const __RESERVED_272: Self = Self(272);
     /// Too much data for IPC layer.
     pub const ASS_TOO_MUCH_DATA: Self = Self(273);
     /// Unexpected IPC command.
@@ -84,6 +114,13 @@ impl ErrorCode {
     pub const ASS_PARAMETER_ERROR: Self = Self(280);
     /// Unknown IPC inquire.
     pub const ASS_UNKNOWN_INQUIRE: Self = Self(281);
+
+    /// Screen or window too small.
+    pub const WINDOW_TOO_SMALL: Self = Self(301);
+    /// Screen or window too large.
+    pub const WINDOW_TOO_LARGE: Self = Self(302);
+    /// Required environment variable not set.
+    pub const MISSING_ENVVAR: Self = Self(303);
 }
 
 impl fmt::Display for ErrorCode {

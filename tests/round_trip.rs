@@ -4,7 +4,7 @@
 //! percent-encoded data surviving the full path, and line size limit
 //! enforcement via the public API.
 
-use assuan::{ErrorCode, Request, Response};
+use assuan::{Error, ErrorCode, Request, Response};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -252,7 +252,7 @@ fn request_write_line_too_long() {
     let result = req.write_to(&mut buf);
     assert!(matches!(
         result,
-        Err(assuan::Error::Err {
+        Err(Error {
             code: ErrorCode::ASS_LINE_TOO_LONG,
             ..
         })
@@ -269,7 +269,7 @@ fn request_write_data_too_long() {
     let result = req.write_to(&mut buf);
     assert!(matches!(
         result,
-        Err(assuan::Error::Err {
+        Err(Error {
             code: ErrorCode::ASS_LINE_TOO_LONG,
             ..
         })
@@ -284,7 +284,7 @@ fn response_write_ok_too_long() {
     let result = resp.write_to(&mut buf);
     assert!(matches!(
         result,
-        Err(assuan::Error::Err {
+        Err(Error {
             code: ErrorCode::ASS_LINE_TOO_LONG,
             ..
         })
@@ -300,7 +300,7 @@ fn response_write_err_too_long() {
     let result = resp.write_to(&mut buf);
     assert!(matches!(
         result,
-        Err(assuan::Error::Err {
+        Err(Error {
             code: ErrorCode::ASS_LINE_TOO_LONG,
             ..
         })
@@ -315,7 +315,7 @@ fn response_write_data_too_long() {
     let result = resp.write_to(&mut buf);
     assert!(matches!(
         result,
-        Err(assuan::Error::Err {
+        Err(Error {
             code: ErrorCode::ASS_LINE_TOO_LONG,
             ..
         })
@@ -331,7 +331,7 @@ fn response_write_status_too_long() {
     let result = resp.write_to(&mut buf);
     assert!(matches!(
         result,
-        Err(assuan::Error::Err {
+        Err(Error {
             code: ErrorCode::ASS_LINE_TOO_LONG,
             ..
         })
@@ -347,7 +347,7 @@ fn response_write_inquire_too_long() {
     let result = resp.write_to(&mut buf);
     assert!(matches!(
         result,
-        Err(assuan::Error::Err {
+        Err(Error {
             code: ErrorCode::ASS_LINE_TOO_LONG,
             ..
         })

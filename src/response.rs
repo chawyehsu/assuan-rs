@@ -62,10 +62,7 @@ pub enum Response {
 
 impl From<Error> for Response {
     fn from(e: Error) -> Self {
-        match e {
-            Error::Err { code, msg } => Response::Err(code, msg),
-            Error::Io(_) => Response::Err(ErrorCode::GENERAL, Some("I/O error".into())),
-        }
+        Response::Err(e.code, e.message)
     }
 }
 
@@ -209,7 +206,7 @@ impl fmt::Display for Response {
 fn write_ok<W: Write>(w: &mut W, msg: Option<&str>) -> Result<usize, Error> {
     match msg {
         None => {
-            w.write_all(b"OK\n").map_err(Error::Io)?;
+            w.write_all(b"OK\n").map_err(Error::from)?;
             Ok(3)
         }
         Some(msg) => {
@@ -223,7 +220,7 @@ fn write_ok<W: Write>(w: &mut W, msg: Option<&str>) -> Result<usize, Error> {
             buf[2] = b' ';
             buf[3..3 + msg.len()].copy_from_slice(msg.as_bytes());
             buf[3 + msg.len()] = b'\n';
-            w.write_all(&buf[..total]).map_err(Error::Io)?;
+            w.write_all(&buf[..total]).map_err(Error::from)?;
             Ok(total)
         }
     }
@@ -246,7 +243,7 @@ fn write_err<W: Write>(w: &mut W, code: ErrorCode, msg: Option<&str>) -> Result<
             buf[3] = b' ';
             buf[4..4 + code_str.len()].copy_from_slice(code_str.as_bytes());
             buf[4 + code_str.len()] = b'\n';
-            w.write_all(&buf[..total]).map_err(Error::Io)?;
+            w.write_all(&buf[..total]).map_err(Error::from)?;
             Ok(total)
         }
         Some(msg) => {
@@ -271,7 +268,7 @@ fn write_err<W: Write>(w: &mut W, code: ErrorCode, msg: Option<&str>) -> Result<
             buf[pos..pos + msg.len()].copy_from_slice(msg.as_bytes());
             pos += msg.len();
             buf[pos] = b'\n';
-            w.write_all(&buf[..pos + 1]).map_err(Error::Io)?;
+            w.write_all(&buf[..pos + 1]).map_err(Error::from)?;
             Ok(pos + 1)
         }
     }
@@ -289,7 +286,7 @@ fn write_status<W: Write>(w: &mut W, keyword: &str, value: &str) -> Result<usize
         buf[1] = b' ';
         buf[2..2 + keyword.len()].copy_from_slice(keyword.as_bytes());
         buf[2 + keyword.len()] = b'\n';
-        w.write_all(&buf[..total]).map_err(Error::Io)?;
+        w.write_all(&buf[..total]).map_err(Error::from)?;
         Ok(total)
     } else {
         let total = 2 + keyword.len() + 1 + value.len() + 1;
@@ -309,7 +306,7 @@ fn write_status<W: Write>(w: &mut W, keyword: &str, value: &str) -> Result<usize
         buf[pos..pos + value.len()].copy_from_slice(value.as_bytes());
         pos += value.len();
         buf[pos] = b'\n';
-        w.write_all(&buf[..pos + 1]).map_err(Error::Io)?;
+        w.write_all(&buf[..pos + 1]).map_err(Error::from)?;
         Ok(pos + 1)
     }
 }
@@ -325,7 +322,7 @@ fn write_comment<W: Write>(w: &mut W, comment: &str) -> Result<usize, Error> {
     buf[1] = b' ';
     buf[2..2 + comment.len()].copy_from_slice(comment.as_bytes());
     buf[2 + comment.len()] = b'\n';
-    w.write_all(&buf[..total]).map_err(Error::Io)?;
+    w.write_all(&buf[..total]).map_err(Error::from)?;
     Ok(total)
 }
 
@@ -344,7 +341,7 @@ fn write_data<W: Write>(w: &mut W, data: &[u8]) -> Result<usize, Error> {
     buf[2 + n] = b'\n';
     let total = 2 + n + 1;
 
-    w.write_all(&buf[..total]).map_err(Error::Io)?;
+    w.write_all(&buf[..total]).map_err(Error::from)?;
     Ok(total)
 }
 
@@ -355,14 +352,14 @@ fn write_inquire<W: Write>(w: &mut W, keyword: &str, params: &str) -> Result<usi
         if line.len() > MAX_LINE_SIZE {
             return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
         }
-        w.write_all(line.as_bytes()).map_err(Error::Io)?;
+        w.write_all(line.as_bytes()).map_err(Error::from)?;
         Ok(line.len())
     } else {
         let line = format!("INQUIRE {keyword} {params}\n");
         if line.len() > MAX_LINE_SIZE {
             return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
         }
-        w.write_all(line.as_bytes()).map_err(Error::Io)?;
+        w.write_all(line.as_bytes()).map_err(Error::from)?;
         Ok(line.len())
     }
 }
@@ -469,7 +466,7 @@ mod tests {
         let mut out = Vec::new();
         assert!(matches!(
             Response::data(data).write_to(&mut out),
-            Err(Error::Err {
+            Err(Error {
                 code: ErrorCode::ASS_LINE_TOO_LONG,
                 ..
             })
@@ -526,7 +523,7 @@ mod tests {
         let mut out = Vec::new();
         assert!(matches!(
             Response::ok(msg).write_to(&mut out),
-            Err(Error::Err {
+            Err(Error {
                 code: ErrorCode::ASS_LINE_TOO_LONG,
                 ..
             })

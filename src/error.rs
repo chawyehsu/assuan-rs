@@ -132,19 +132,12 @@ impl fmt::Display for ErrorCode {
 
 /// Errors that can occur when using the crate.
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
-    /// An I/O error occurred.
-    #[error("I/O: {0}")]
-    Io(#[from] std::io::Error),
-
-    /// A protocol-level error to be sent as an `ERR` response.
-    #[error("ERR {code}{}", msg.as_deref().map(|m| format!(" {m}")).unwrap_or_default())]
-    Err {
-        /// The error code.
-        code: ErrorCode,
-        /// Optional error message.
-        msg: Option<String>,
-    },
+#[error("ERR {code}{}", message.as_deref().map(|m| format!(" {m}")).unwrap_or_default())]
+pub struct Error {
+    /// The error code.
+    pub code: ErrorCode,
+    /// Optional error message.
+    pub message: Option<String>,
 }
 
 impl Error {
@@ -155,17 +148,31 @@ impl Error {
     ///
     /// let e = Error::new(ErrorCode::GENERAL, "something broke");
     /// ```
-    pub fn new(code: ErrorCode, msg: impl Into<String>) -> Self {
-        Error::Err {
+    pub fn new(code: ErrorCode, message: impl Into<String>) -> Self {
+        Self {
             code,
-            msg: Some(msg.into()),
+            message: Some(message.into()),
         }
+    }
+
+    /// Create a protocol error from an I/O error.
+    ///
+    /// Converts a `std::io::Error` into an `Error` with code
+    /// `ErrorCode::GENERAL` and a message prefixed with "I/O: ".
+    pub(crate) fn from_io(e: std::io::Error) -> Self {
+        Self::new(ErrorCode::GENERAL, format!("I/O: {e}"))
     }
 }
 
 impl From<ErrorCode> for Error {
     fn from(code: ErrorCode) -> Self {
-        Error::Err { code, msg: None }
+        Self { code, message: None }
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Self {
+        Self::from_io(e)
     }
 }
 
@@ -188,15 +195,25 @@ mod tests {
     #[test]
     fn error_new_with_str() {
         let e = Error::new(ErrorCode::GENERAL, "oops");
-        assert!(matches!(e, Error::Err { code: ErrorCode::GENERAL, msg: Some(s) } if s == "oops"));
+        assert!(matches!(
+            e,
+            Error {
+                code: ErrorCode::GENERAL,
+                message: Some(s)
+            } if s == "oops"
+        ));
     }
 
     #[test]
     fn error_new_with_string() {
         let e = Error::new(ErrorCode::ASS_UNKNOWN_CMD, "bad cmd".to_string());
-        assert!(
-            matches!(e, Error::Err { code: ErrorCode::ASS_UNKNOWN_CMD, msg: Some(s) } if s == "bad cmd")
-        );
+        assert!(matches!(
+            e,
+            Error {
+                code: ErrorCode::ASS_UNKNOWN_CMD,
+                message: Some(s)
+            } if s == "bad cmd"
+        ));
     }
 
     #[test]
@@ -204,9 +221,9 @@ mod tests {
         let e: Error = ErrorCode::CANCELED.into();
         assert!(matches!(
             e,
-            Error::Err {
+            Error {
                 code: ErrorCode::CANCELED,
-                msg: None
+                message: None
             }
         ));
     }

@@ -85,13 +85,13 @@ if let Some(resp) = client.recv()? {
 
 | Type | Description |
 | ------ | ------------- |
-| [`Request`] | Client request — protocol commands, data lines, and application commands |
-| [`Response`] | Server response — OK, ERR, S, D, INQUIRE, comments |
-| [`Server`] | Concrete server with typed `send`/`recv`, handles BYE/NOP transparently |
-| [`Client`] | Concrete client with typed `send`/`recv` |
-| [`LineReader`] | Buffered line reader with 1000-byte line limit, zero-alloc hot path |
-| [`Error`] | Crate error type — I/O and protocol-level errors |
-| [`ErrorCode`] | `u32` newtype for libgpg-error compatible error codes |
+| `Request` | Client request — protocol commands, data lines, and application commands |
+| `Response` | Server response — OK, ERR, S, D, INQUIRE, comments |
+| `Server` | Concrete server with typed `send`/`recv`, handles BYE/NOP transparently |
+| `Client` | Concrete client with typed `send`/`recv` |
+| `LineReader` | Buffered line reader with 1000-byte line limit, zero-alloc hot path |
+| `Error` | Crate error type (`code` + optional `msg`) |
+| `ErrorCode` | `u32` newtype for libgpg-error compatible error codes |
 
 ## License
 

@@ -54,13 +54,13 @@ impl<R: Read, W: Write> Server<R, W> {
                 Request::Bye => {
                     // Send OK and return None to signal end of session.
                     Response::OK.write_to(&mut self.writer)?;
-                    self.writer.flush().map_err(Error::Io)?;
+                    self.writer.flush().map_err(Error::from)?;
                     return Ok(None);
                 }
                 Request::Nop => {
                     // Send OK, continue to next request.
                     Response::OK.write_to(&mut self.writer)?;
-                    self.writer.flush().map_err(Error::Io)?;
+                    self.writer.flush().map_err(Error::from)?;
                     continue;
                 }
                 Request::Comment(_) => {
@@ -70,7 +70,7 @@ impl<R: Read, W: Write> Server<R, W> {
                 Request::Reset => {
                     // Send OK, but surface to caller so they can clear state.
                     Response::OK.write_to(&mut self.writer)?;
-                    self.writer.flush().map_err(Error::Io)?;
+                    self.writer.flush().map_err(Error::from)?;
                     return Ok(Some(req));
                 }
                 _ => return Ok(Some(req)),

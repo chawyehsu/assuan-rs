@@ -273,8 +273,8 @@ fn write_line<W: Write>(w: &mut W, line: &[u8]) -> Result<usize, Error> {
     if total > MAX_LINE_SIZE {
         return Err(Error::new(ErrorCode::ASS_LINE_TOO_LONG, "line too long"));
     }
-    w.write_all(line).map_err(Error::Io)?;
-    w.write_all(b"\n").map_err(Error::Io)?;
+    w.write_all(line).map_err(Error::from)?;
+    w.write_all(b"\n").map_err(Error::from)?;
     Ok(total)
 }
 
@@ -293,7 +293,7 @@ fn write_data<W: Write>(w: &mut W, data: &[u8]) -> Result<usize, Error> {
     buf[2 + n] = b'\n';
     let total = 2 + n + 1;
 
-    w.write_all(&buf[..total]).map_err(Error::Io)?;
+    w.write_all(&buf[..total]).map_err(Error::from)?;
     Ok(total)
 }
 

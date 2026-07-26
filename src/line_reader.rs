@@ -88,7 +88,7 @@ impl<R: Read> LineReader<R> {
             let n = match self.reader.read(&mut self.buffer[self.bytes_read..]) {
                 Ok(n) => n,
                 Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
-                Err(e) => return Err(Error::Io(e)),
+                Err(e) => return Err(e.into()),
             };
 
             if n == 0 {
@@ -173,7 +173,7 @@ mod tests {
         let mut reader = LineReader::new(io::Cursor::new(long_line));
         assert!(matches!(
             reader.read(),
-            Err(Error::Err {
+            Err(Error {
                 code: ErrorCode::ASS_LINE_TOO_LONG,
                 ..
             })

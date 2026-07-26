@@ -3,37 +3,37 @@
 //! Tests the `ErrorCode → Error → Response::from(Error)` conversion paths
 //! through the public API.
 
-use assuan::{ErrorCode, Request, Response};
+use assuan::{Error, ErrorCode, Request, Response};
 
 #[test]
 fn error_code_to_error_conversion() {
-    let e: assuan::Error = ErrorCode::CANCELED.into();
+    let e: Error = ErrorCode::CANCELED.into();
     assert!(matches!(
         e,
-        assuan::Error::Err {
+        Error {
             code: ErrorCode::CANCELED,
-            msg: None,
+            message: None,
         }
     ));
 }
 
 #[test]
 fn error_code_to_error_with_message() {
-    let e = assuan::Error::new(ErrorCode::GENERAL, "something broke");
+    let e = Error::new(ErrorCode::GENERAL, "something broke");
     assert!(matches!(
         e,
-        assuan::Error::Err {
+        Error {
             code: ErrorCode::GENERAL,
-            msg: Some(ref s),
+            message: Some(ref s),
         } if s == "something broke"
     ));
 }
 
 #[test]
 fn error_to_response_err_variant() {
-    let e = assuan::Error::Err {
+    let e = Error {
         code: ErrorCode::ASS_UNKNOWN_CMD,
-        msg: Some("unknown command".into()),
+        message: Some("unknown command".into()),
     };
     let resp: Response = e.into();
     assert_eq!(
@@ -44,7 +44,7 @@ fn error_to_response_err_variant() {
 
 #[test]
 fn error_to_response_err_no_message() {
-    let e: assuan::Error = ErrorCode::CANCELED.into();
+    let e: Error = ErrorCode::CANCELED.into();
     let resp: Response = e.into();
     assert_eq!(resp, Response::Err(ErrorCode::CANCELED, None));
 }
@@ -52,22 +52,22 @@ fn error_to_response_err_no_message() {
 #[test]
 fn error_io_to_response_general() {
     let io_err = std::io::Error::new(std::io::ErrorKind::BrokenPipe, "pipe broke");
-    let e = assuan::Error::Io(io_err);
+    let e: Error = io_err.into();
     let resp: Response = e.into();
     assert_eq!(
         resp,
-        Response::Err(ErrorCode::GENERAL, Some("I/O error".into()))
+        Response::Err(ErrorCode::GENERAL, Some("I/O: pipe broke".into()))
     );
 }
 
 #[test]
 fn error_new_with_string() {
-    let e = assuan::Error::new(ErrorCode::ASS_LINE_TOO_LONG, "too long".to_string());
+    let e = Error::new(ErrorCode::ASS_LINE_TOO_LONG, "too long".to_string());
     assert!(matches!(
         e,
-        assuan::Error::Err {
+        Error {
             code: ErrorCode::ASS_LINE_TOO_LONG,
-            msg: Some(ref s),
+            message: Some(ref s),
         } if s == "too long"
     ));
 }
@@ -111,7 +111,7 @@ fn request_parse_error_is_protocol_error() {
     let err = result.unwrap_err();
     assert!(matches!(
         err,
-        assuan::Error::Err {
+        Error {
             code: ErrorCode::ASS_INV_VALUE,
             ..
         }
@@ -126,7 +126,7 @@ fn response_parse_error_is_protocol_error() {
     let err = result.unwrap_err();
     assert!(matches!(
         err,
-        assuan::Error::Err {
+        Error {
             code: ErrorCode::ASS_INV_VALUE,
             ..
         }

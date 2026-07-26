@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.0](https://github.com/chawyehsu/assuan-rs/compare/v0.2.0...v0.3.0) (2026-07-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **error:** rename ASS_PARAMETER_ERROR to ASS_PARAMETER
+
+### Features
+
+* **error:** add new error codes and fix documentation ([1a60e5b](https://github.com/chawyehsu/assuan-rs/commit/1a60e5bf56a5cf61c68f0c6285f36fab921eafa3))
+
+
+### Bug Fixes
+
+* **error:** rename ASS_PARAMETER_ERROR to ASS_PARAMETER ([e19da14](https://github.com/chawyehsu/assuan-rs/commit/e19da1482672ab85d6b6a71d76d0752183659d34))
+
 ## [0.2.0](https://github.com/chawyehsu/assuan-rs/compare/v0.1.3...v0.2.0) (2026-07-26)
 
 

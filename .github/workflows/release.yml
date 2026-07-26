@@ -18,7 +18,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout Source
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup crates.io Auth
         id: auth
@@ -28,3 +28,10 @@ jobs:
         run: cargo publish --registry crates-io
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+  # Github Release
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Draft Release
+        uses: chawyehsu/actions/create-release@39efbf77de6aa263da59da5e12ee36e2c1bb174e # v1.3.0

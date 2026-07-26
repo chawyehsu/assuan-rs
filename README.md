@@ -90,7 +90,7 @@ if let Some(resp) = client.recv()? {
 | `Server` | Concrete server with typed `send`/`recv`, handles BYE/NOP transparently |
 | `Client` | Concrete client with typed `send`/`recv` |
 | `LineReader` | Buffered line reader with 1000-byte line limit, zero-alloc hot path |
-| `Error` | Crate error type (`code` + optional `msg`) |
+| `Error` | Crate error type (`code` + optional `message`) |
 | `ErrorCode` | `u32` newtype for libgpg-error compatible error codes |
 
 ## License

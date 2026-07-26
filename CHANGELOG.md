@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.0](https://github.com/chawyehsu/assuan-rs/compare/v0.1.3...v0.2.0) (2026-07-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **error:** flatten Error enum into struct with code and message
+
+### Features
+
+* **error:** flatten Error enum into struct with code and message ([73cbfd1](https://github.com/chawyehsu/assuan-rs/commit/73cbfd1d3db9f99ef259a15176d8791afbf857c1))
+
+
+### Bug Fixes
+
+* **error:** fix formatting of optional error message ([a8fc719](https://github.com/chawyehsu/assuan-rs/commit/a8fc719aec3212ee23c19b9a01f28938dff12f72))
+
 ## [0.1.3](https://github.com/chawyehsu/assuan-rs/compare/v0.1.2...v0.1.3) (2026-07-25)
 
 

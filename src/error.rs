@@ -166,7 +166,10 @@ impl Error {
 
 impl From<ErrorCode> for Error {
     fn from(code: ErrorCode) -> Self {
-        Self { code, message: None }
+        Self {
+            code,
+            message: None,
+        }
     }
 }
 

@@ -111,7 +111,7 @@ impl ErrorCode {
     /// No output source for IPC.
     pub const ASS_NO_OUTPUT: Self = Self(279);
     /// IPC parameter error.
-    pub const ASS_PARAMETER_ERROR: Self = Self(280);
+    pub const ASS_PARAMETER: Self = Self(280);
     /// Unknown IPC inquire.
     pub const ASS_UNKNOWN_INQUIRE: Self = Self(281);
 

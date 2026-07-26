@@ -18,10 +18,20 @@ impl ErrorCode {
     pub const GENERAL: Self = Self(1);
     /// Bad passphrase.
     pub const BAD_PASSPHRASE: Self = Self(11);
+    /// Cannot open keyring.
+    pub const KEYRING_OPEN: Self = Self(13);
     /// Invalid passphrase.
     pub const INV_PASSPHRASE: Self = Self(31);
+    /// Invalid keyring.
+    pub const INV_KEYRING: Self = Self(34);
     /// Unexpected error.
     pub const UNEXPECTED: Self = Self(38);
+    /// Syntax error in URI.
+    pub const BAD_URI: Self = Self(46);
+    /// Invalid URI.
+    pub const INV_URI: Self = Self(47);
+    /// Network error.
+    pub const NETWORK: Self = Self(48);
     /// Invalid value.
     pub const INV_VALUE: Self = Self(55);
     /// No data.
@@ -50,6 +60,8 @@ impl ErrorCode {
     pub const CANCELED: Self = Self(99);
     /// Not confirmed.
     pub const NOT_CONFIRMED: Self = Self(114);
+    /// Configuration error.
+    pub const CONFIGURATION: Self = Self(115);
     /// A locale function failed.
     pub const LOCALE_PROBLEM: Self = Self(166);
     /// Unknown option.
@@ -64,7 +76,7 @@ impl ErrorCode {
     pub const FULLY_CANCELED: Self = Self(198);
 
     // -- Assuan-specific (libgpg-error range 257–281) --
-    /// General IPC (Assuan) error.
+    /// General IPC error.
     pub const ASS_GENERAL: Self = Self(257);
     /// IPC accept call failed.
     pub const ASS_ACCEPT_FAILED: Self = Self(258);
@@ -94,7 +106,7 @@ impl ErrorCode {
     pub const ASS_READ_ERROR: Self = Self(270);
     /// IPC write error.
     pub const ASS_WRITE_ERROR: Self = Self(271);
-    /// Reserved.
+    /// Reserved 272.
     const __RESERVED_272: Self = Self(272);
     /// Too much data for IPC layer.
     pub const ASS_TOO_MUCH_DATA: Self = Self(273);
@@ -121,6 +133,9 @@ impl ErrorCode {
     pub const WINDOW_TOO_LARGE: Self = Self(302);
     /// Required environment variable not set.
     pub const MISSING_ENVVAR: Self = Self(303);
+
+    /// Unknown system error.
+    pub const UNKNOWN_ERRNO: Self = Self(16382);
 }
 
 impl fmt::Display for ErrorCode {

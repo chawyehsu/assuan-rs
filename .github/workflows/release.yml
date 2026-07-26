@@ -31,6 +31,7 @@ jobs:
   # Github Release
   release:
     name: Create Release
+    needs: [cargo_publish]
     runs-on: ubuntu-latest
     steps:
       - name: Draft Release
